@@ -283,44 +283,71 @@ You are a data extraction agent. The user will first provide a "target data desc
         return file_path
 
     @llm_function
-    def drawScatterplot(self, csv_source_file: str, x_axis_label: str = 'X', y_axis_label: str = 'Y', regression: bool = True, regression_style: str = 'r--') -> str:
+    def drawPlot(
+        self,
+        csv_source_file: str,
+        plot_type: str = "scatter",
+        x_axis_label: str = "X",
+        y_axis_label: str = "Y",
+        color: str = "b",
+        bins: int = 10,
+        bar_width: float = 0.8,
+        line_style: str = "-",
+        regression: bool = False,
+        regression_style: str = "r--"
+    ) -> str:
         """
-        Draw a scatterplot of x vs y, with an optional regression line. You can either provide x and y as lists, or a CSV file path containing two columns to plot.
+        Draw a plot (scatter, histogram, bar, or line) from a CSV file with two columns. Supports customization of colors, styles, and more.
         Args:
-            csv_source_file (str): Path to a CSV file containing two columns to plot. If provided and x/y are not given, loads data from this file.
-            x_axis_label (str): Label for the X-axis.
-            y_axis_label (str): Label for the Y-axis.
-            regression (bool): Whether to draw a regression line.
-            regression_style (str): Matplotlib line style for the regression line (e.g., 'r--' for dotted red).
+            csv_source_file (str): Path to a CSV file with two columns.
+            plot_type (str): Type of plot. One of: "scatter", "hist", "bar", "line".
+            x_axis_label (str): Label for X axis.
+            y_axis_label (str): Label for Y axis.
+            color (str): Color for plot elements (e.g., 'b', 'g', 'r', '#FF00FF').
+            bins (int): Number of bins (for histograms).
+            bar_width (float): Width of bars (for bar charts).
+            line_style (str): Line style (for line plots, e.g., '-', '--', '-.', ':').
+            regression (bool): Draw regression line (scatter only).
+            regression_style (str): Style for regression line (e.g., 'r--').
         Returns:
             str: File path to the saved PNG image.
         Raises:
-            ValueError: If neither x/y nor a valid parquet_file is provided.
+            ValueError: If the CSV file is invalid or plot_type is unsupported.
+        
+        Available plot_type options:
+            - "scatter": Scatterplot (x vs y, with optional regression line)
+            - "hist": Histogram (of x values)
+            - "bar": Bar chart (x as categories, y as heights)
+            - "line": Line plot (x vs y)
         """
+        import pandas as pd
+        import matplotlib.pyplot as plt
         if csv_source_file and not csv_source_file.endswith('.csv'):
             raise ValueError("csv_source_file must be a valid CSV file path ending with .csv")
-
-        import pandas as pd
-        if csv_source_file is not None:
-            df = pd.read_csv(csv_source_file, header=None)
-            if df.shape[1] < 2:
-                raise ValueError("CSV file must have at least two columns.")
-            x_vals = df.iloc[:, 0].tolist()
-            y_vals = df.iloc[:, 1].tolist()
-        else:
-            raise ValueError("Must provide either x and y lists, or a csv_file with two columns.")
+        df = pd.read_csv(csv_source_file, header=None)
+        if df.shape[1] < 2:
+            raise ValueError("CSV file must have at least two columns.")
+        x_vals = df.iloc[:, 0].tolist()
+        y_vals = df.iloc[:, 1].tolist()
         plt.figure(figsize=(6,4))
-        plt.scatter(x_vals, y_vals)
-        if regression and len(x_vals) > 1:
-            import numpy as np
-            m, b = np.polyfit(x_vals, y_vals, 1)
-            plt.plot(x_vals, [m*xi + b for xi in x_vals], regression_style, label='Regression')
-            plt.legend()
+        if plot_type == "scatter":
+            plt.scatter(x_vals, y_vals, color=color)
+            if regression and len(x_vals) > 1:
+                import numpy as np
+                m, b = np.polyfit(x_vals, y_vals, 1)
+                plt.plot(x_vals, [m*xi + b for xi in x_vals], regression_style, label='Regression')
+                plt.legend()
+        elif plot_type == "hist":
+            plt.hist(x_vals, bins=bins, color=color)
+        elif plot_type == "bar":
+            plt.bar(x_vals, y_vals, color=color, width=bar_width)
+        elif plot_type == "line":
+            plt.plot(x_vals, y_vals, color=color, linestyle=line_style)
+        else:
+            raise ValueError("Unsupported plot_type. Choose from 'scatter', 'hist', 'bar', 'line'.")
         plt.xlabel(x_axis_label)
         plt.ylabel(y_axis_label)
-         # Save the plot to a file
-         # Use a hash of the x and y values to create a unique file name
-        file_path = f"{self.tempDir}/scatterplot_{abs(hash(str(x_vals)+str(y_vals)+regression_style))}.png"
+        file_path = f"{self.tempDir}/plot_{abs(hash(str(x_vals)+str(y_vals)+plot_type+color+str(regression)+regression_style))}.png"
         plt.savefig(file_path, format='png')
         plt.close()
         return file_path
