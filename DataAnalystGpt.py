@@ -109,8 +109,13 @@ You are a data extraction agent. The user will first provide a "target data desc
 
         # Text MIME type
         if mime_type.startswith('text/'):
-            with open(filePath, 'r') as f:
-                fileContent = f.read()
+            # Try reading as utf-8, fallback to latin-1 if decoding fails
+            try:
+                with open(filePath, 'r', encoding='utf-8') as f:
+                    fileContent = f.read()
+            except UnicodeDecodeError:
+                with open(filePath, 'r', encoding='latin-1') as f:
+                    fileContent = f.read()
 
             prompt = f"""
     Target data description:
