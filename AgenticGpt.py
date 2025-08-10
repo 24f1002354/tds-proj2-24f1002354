@@ -6,6 +6,7 @@ import tempfile
 import openai
 import logging
 import logging.handlers
+import traceback
 
 import openai
 from openai.types.chat.chat_completion_message import ChatCompletionMessage
@@ -248,7 +249,8 @@ Try to make as few calls as possible, and only call functions when necessary. Re
                         try:
                             result = getattr(self, fn_name)(**args)
                         except Exception as e:
-                            syslog.error(f"Exception in tool call '{fn_name}': {e}")
+                            tb = traceback.format_exc()
+                            syslog.error(f"Exception in tool call '{fn_name}': {e}\n{tb}")
                             result = {"error": str(e)}
                     else:
                         result = {"error": f"Unknown function: {fn_name}"}
