@@ -1,0 +1,10 @@
+.env
+*.pyc
+__pycache__/
+# VSCode
+.vscode/
+# OS junk
+.DS_Store
+Thumbs.db
+# Python virtual environment
+venv/
