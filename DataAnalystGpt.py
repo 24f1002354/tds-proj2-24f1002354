@@ -352,3 +352,56 @@ You are a data extraction agent. The user will first provide a "target data desc
         plt.close()
         return file_path
 
+    @llm_function
+    def drawDiagram(self, diagramDescription: str) -> str:
+        """
+        Generate a diagram as an SVG from a plain English description, convert it to PNG, and return the PNG file path.
+        Args:
+            diagramDescription (str): A plain English description of the diagram to generate (e.g., 'A Venn diagram with three overlapping circles labeled A, B, and C').
+        Returns:
+            str: File path to the saved PNG image.
+        """
+        import cairosvg
+        import os
+        # System prompt for the LLM
+        systemPrompt = (
+            "You are a diagram drawing agent. Given a plain English description, generate a valid SVG diagram that fulfills the requirements. "
+            "The SVG should be visually clear, self-contained, and not reference any external resources. "
+        )
+        # Use OpenAI function calling with a strict SVG schema
+        responseFormat = {
+            "type": "json_schema",
+            "json_schema": {
+                "strict": True,
+                "name": "SvgDiagram",
+                "description": "A valid SVG diagram as a string.",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "svg": {
+                            "type": "string",
+                            "description": "A complete SVG document as a string, starting with <svg ...> and ending with </svg>."
+                        }
+                    },
+                    "required": ["svg"],
+                    "additionalProperties": False
+                }
+            }
+        }
+        # Get SVG from LLM
+        responseContent = self.oneshot(
+            diagramDescription,
+            systemPrompt=systemPrompt,
+            responseFormat=responseFormat
+        )
+        svg_obj = json.loads(responseContent)
+        svg_str = svg_obj["svg"]
+        # Save SVG to temp file
+        svg_path = os.path.join(self.tempDir, f"diagram_{abs(hash(diagramDescription))}.svg")
+        with open(svg_path, "w", encoding="utf-8") as f:
+            f.write(svg_str)
+        # Convert SVG to PNG
+        png_path = os.path.join(self.tempDir, f"diagram_{abs(hash(diagramDescription))}.png")
+        cairosvg.svg2png(url=svg_path, write_to=png_path)
+        return png_path
+
