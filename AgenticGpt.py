@@ -289,6 +289,7 @@ Try to make as few calls as possible, and only call functions when necessary. Re
         Usage for LLM:
             - To return a PNG image, include the file path as a value in the answer object or array. The agent will detect file paths, load and base64-encode the file, and replace the value with the encoded string.
             - To return a JSON or text answer, include the value directly in the answer.
+            - Note on validation: ensure that all user-requested keys are present in the answer, even for any entries that can not be answered.
 
         IMPORTANT FORMATTING NOTES FOR LLM:
             - If the answer is a number (e.g., 3), return just that, not as a longer string or spelled-out word (e.g., return 3, not "three" or "The answer is 3").

@@ -13,6 +13,10 @@ A Python-based agentic data analyst that can:
 - **Visualization:** Generates scatterplots and other visualizations, returning results as base64-encoded images.
 - **API-Driven:** Interact with the agent via an API endpoint (`POST /24f1002354-submit-question`) using `curl` or any HTTP client.
 
+## System Requirements
+- The `libcairo2` package must be installed on your system. This is required by the `cairosvg` Python package for SVG-to-PNG conversion.
+  - On Ubuntu/Debian: `sudo apt install libcairo2`
+
 ## Usage
 
 ### 1. Install dependencies
