@@ -4,6 +4,8 @@ import os
 import shutil
 import tempfile
 import openai
+import logging
+import logging.handlers
 
 import openai
 from openai.types.chat.chat_completion_message import ChatCompletionMessage
@@ -246,6 +248,7 @@ Try to make as few calls as possible, and only call functions when necessary. Re
                         try:
                             result = getattr(self, fn_name)(**args)
                         except Exception as e:
+                            syslog.error(f"Exception in tool call '{fn_name}': {e}")
                             result = {"error": str(e)}
                     else:
                         result = {"error": f"Unknown function: {fn_name}"}
@@ -256,6 +259,7 @@ Try to make as few calls as possible, and only call functions when necessary. Re
                     })
             else:
                 # Instruct the LLM to perform a function call
+                syslog.info(f"LLM response (no tool call): {completion.content}")
                 messages.append({
                     "role": "user",
                     "content": "Please call a function to continue processing the question."
@@ -320,3 +324,12 @@ Try to make as few calls as possible, and only call functions when necessary. Re
         assert isinstance(processedAnswer, (list, dict)), "Final answer must be a list or dict."
         self.finalAnswer = processedAnswer
         return {"status": "final answer received", "type": "object_with_files_base64"}
+
+# Set up syslog handler for logging
+syslog = logging.getLogger("AgenticGpt")
+syslog.setLevel(logging.INFO)
+if not syslog.handlers:
+    handler = logging.handlers.SysLogHandler(address='/dev/log')
+    formatter = logging.Formatter('%(name)s: %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    syslog.addHandler(handler)
