@@ -46,7 +46,8 @@ class DataAnalystGpt(AgenticGpt):
             soup = BeautifulSoup(resp.text, "html.parser")
             pageContent = soup.get_text(separator="\n", strip=True)
             filePath = f"{self.tempDir}/data_{abs(hash(url))}.txt"
-            with open(filePath, 'w') as f:
+            # Write with utf-8 encoding to handle non-ASCII characters
+            with open(filePath, 'w', encoding='utf-8') as f:
                 f.write(pageContent)
         
         extractedDataInfo = self.extractDataFromFile(
@@ -317,5 +318,5 @@ You are a data extraction agent. The user will first provide a "target data desc
         file_path = f"{self.tempDir}/scatterplot_{abs(hash(str(x_vals)+str(y_vals)+regression_style))}.png"
         plt.savefig(file_path, format='png')
         plt.close()
-        return file_path    
+        return file_path
 
