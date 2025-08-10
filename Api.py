@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 
 # Load environment variables from .env file
-load_dotenv()
+from pathlib import Path
+dotenv_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 @app.route('/24f1002354-submit-question', methods=['POST'])
