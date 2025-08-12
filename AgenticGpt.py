@@ -276,18 +276,22 @@ Try to make as few calls as possible, and only call functions when necessary. Re
         return self.__tempDir
     
     @llm_function
-    def provideFinalAnswer(self, answer: list|dict):
+    def provideFinalAnswer(self, answer: list|dict, png_encoding: str = "base64"):
         """
         Called by the LLM when it is finished processing all questions.
 
         Args:
             answer: The final answer/answers (object or list). Any value in the answer that is a string and a valid PNG file path will be loaded, base64-encoded, and replaced in the answer. Other values are left unchanged.
+            png_encoding (str): How PNG images should be presented in the output. Options:
+                - "base64": PNGs are returned as a raw base64 string (no prefix).
+                - "data_url": PNGs are returned as a base64 image URL (e.g., 'data:image/png;base64,...').
+                Default is "base64".
 
         Returns:
             dict: Confirmation and the type of answer stored.
 
         Usage for LLM:
-            - To return a PNG image, include the file path as a value in the answer object or array. The agent will detect file paths, load and base64-encode the file, and replace the value with the encoded string.
+            - To return a PNG image, include the file path as a value in the answer object or array. The agent will detect file paths, load and base64-encode the file, and replace the value with the encoded string (format depends on png_encoding).
             - To return a JSON or text answer, include the value directly in the answer.
             - Note on validation: ensure that all user-requested keys are present in the answer, even for any entries that can not be answered.
 
@@ -307,15 +311,17 @@ Try to make as few calls as possible, and only call functions when necessary. Re
                     if (
                         os.path.isfile(val) and
                         val.startswith(self.__tempDir) and
-                        # Is a .png file
                         val.lower().endswith('.png')
                     ):
                         with open(canonicalPath, "rb") as f:
-                            return 'data:image/png;base64,' + base64.b64encode(f.read()).decode("utf-8")
+                            b64 = base64.b64encode(f.read()).decode("utf-8")
+                            if png_encoding == "base64":
+                                return b64
+                            else:
+                                return 'data:image/png;base64,' + b64
             except Exception as e:
                 pass
             return val
-            
         def process(obj):
             if isinstance(obj, dict):
                 return {k: process(v) for k, v in obj.items()}
