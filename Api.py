@@ -11,6 +11,7 @@ dotenv_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
+@app.route('/241f002354-submit-question', methods=['POST'])
 @app.route('/24f1002354-submit-question', methods=['POST'])
 def api():
     assert OPENAI_API_KEY, "OPENAI_API_KEY must be set in .env file"
